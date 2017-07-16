@@ -2,6 +2,11 @@ import requests, urllib
 from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
 
+
+#LATITUDE=28.6129
+#LONGITUDE=77.2295
+#SENDBOX USER = inta1996,
+
 APP_ACCESS_TOKEN = '3227036965.6587353.0e99318ec6374c25aaca90275c07bf40'
 BASE_URL = 'https://api.instagram.com/v1/'
 
@@ -217,49 +222,30 @@ def get_comments(insta_username):
         exit()
 
 
-#Function to analyse the tags of post related to natural calamities
-def get_calamities_post(insta_username):
-    user_id = get_user_id(insta_username)
-    if user_id == None:
-        print "User doesn\'t exist"
-        exit()
-    request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
-    print 'GET request url : %s' % (request_url)
-    user_media = requests.get(request_url).json()
-
-    if user_media['meta']['code'] == 200:
-        if len(user_media['data']):
-            i = 0
-            rang = len(user_media['data'])
-            for i in range(rang):
-                for temp in calamities:  # Comparing tags of post with list calamities
-                    if user_media['data'][i]['location'] != None:
-                            id = user_media['data'][i]['location']['id']
-                            locationid.append(id)
-
-        else:
-            print "Post doesn\'t exist"
-            return None
-    else:
-        print 'Status code other than 200 received'
 
 
 # Function declaration to get the location where natural calamities has occured
 
-def get_location():
-    for temp_id in locationid:
-      next_url = (BASE_URL + 'locations/%s/media/recent?access_token=%s') % (temp_id, APP_ACCESS_TOKEN)
-      print 'url is ',next_url
-      loc_media=requests.get(next_url).json()              # Fetching loction from the media
-      if loc_media['meta']['code']==200:
-        if len(loc_media['data']):
-            print 'LOCATION:%s' % (loc_media['data'][0]['location']['name'])
-            print loc_media['data'][0]['images']['standard_resolution']['url']
+def get_natural_calamities(lat,lng):
+    request_url = (BASE_URL + 'media/search?lat=%s&lng=%s&distance=500&access_token=%s') % (lat, lng, APP_ACCESS_TOKEN)
+    print 'GET reques url: %s' % (request_url)
+    user_location = requests.get(request_url).json()
+    print user_location
+    if user_location['meta']['code'] == 200:
+        if len(user_location['data']):
+            image=user_location['data'][0]['images']['standard_resolution']['url']
+            print image
+            for temp in calamities:
+                if user_location['data'][0]['tags']==temp:
+                 print user_location['data'][0]['tags']
+                 print user_location['data'][0]['location']
+            print 'Tags are:%s' % (user_location['data'][0]['tags'])
+            print 'Location is:%s' % (user_location['data'][0]['location'])
+            print '%s is going on at %s' %(user_location['data'][0]['tags'],user_location['data'][0]['location'])
         else:
-            print 'No media'
-      else:
-         print 'Status code other than 200 received'
-
+            print'media not found'
+    else:
+        print 'Status code other than 200 received'
 
 def start_bot():
     while True:
@@ -274,9 +260,8 @@ def start_bot():
         print "6.Make a comment on the recent post of a user"
         print "7.Delete negative comments from the recent post of a user"
         print "8.Get list of comments of user"
-        print "9.Get calamities post"
-        print "10.Get location of calamities"
-        print "11.Exit"
+        print "9.Get location of calamities"
+        print "10.Exit"
 
         choice = raw_input("Enter you choice: ")
         if choice == "1":
@@ -302,12 +287,10 @@ def start_bot():
             insta_username = raw_input("Enter the username of insta_user")
             get_comments(insta_username)
         elif choice == "9":
-            insta_username = raw_input("Enter the username of insta_user")
-            get_calamities_post(insta_username)
+            lat = float(raw_input("Enter the latitude:"))
+            lng = float(raw_input("Enter the longitude"))
+            get_natural_calamities(lat, lng)
         elif choice == "10":
-            insta_username = raw_input("Enter the username of insta_user")
-            get_location()
-        elif choice == "11":
             exit()
         else:
             print "wrong choice"
